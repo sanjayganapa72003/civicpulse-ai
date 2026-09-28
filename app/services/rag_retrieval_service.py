@@ -3,7 +3,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from pinecone import Pinecone
-from sentence_transformers import SentenceTransformer
+import voyageai
 
 from app.db.mongodb import db
 
@@ -12,14 +12,24 @@ load_dotenv()
 
 
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+VOYAGE_API_KEY = os.getenv("VOYAGE_API_KEY")
 
-INDEX_NAME = "civicpulse-government-policies"
-MODEL_NAME = "intfloat/multilingual-e5-base"
+INDEX_NAME = "civicpulse-government-policies-voyage"
+MODEL_NAME = "voyage-4-lite"
+EMBEDDING_DIMENSION = 1024
 
-embedding_model = SentenceTransformer(MODEL_NAME)
 
-pc = Pinecone(api_key=PINECONE_API_KEY)
-index = pc.Index(INDEX_NAME)
+pc = Pinecone(
+    api_key=PINECONE_API_KEY
+)
+
+index = pc.Index(
+    INDEX_NAME
+)
+
+voyage_client = voyageai.Client(
+    api_key=VOYAGE_API_KEY
+)
 
 rag_chunks_collection = db["rag_chunks"]
 
@@ -34,7 +44,7 @@ def retrieve_policy_chunks(
     Flow:
         query
           ↓
-        E5 embedding
+        Voyage query embedding
           ↓
         Pinecone semantic search
           ↓
@@ -43,11 +53,14 @@ def retrieve_policy_chunks(
         MongoDB chunk text + metadata
     """
 
-    # E5 expects the query prefix for retrieval queries
-    query_embedding = embedding_model.encode(
-        f"query: {query}",
-        normalize_embeddings=True,
-    ).tolist()
+    response = voyage_client.embed(
+        [query],
+        model=MODEL_NAME,
+        input_type="query",
+        output_dimension=EMBEDDING_DIMENSION,
+    )
+
+    query_embedding = response.embeddings[0]
 
     results = index.query(
         vector=query_embedding,
@@ -55,7 +68,10 @@ def retrieve_policy_chunks(
         include_metadata=True,
     )
 
-    matches = results.get("matches", [])
+    matches = results.get(
+        "matches",
+        []
+    )
 
     if not matches:
         return []
@@ -65,7 +81,7 @@ def retrieve_policy_chunks(
         for match in matches
     ]
 
-    # Fetch the actual chunk text from MongoDB
+    # Fetch actual chunk text from MongoDB
     documents = rag_chunks_collection.find(
         {
             "chunk_id": {
@@ -89,14 +105,20 @@ def retrieve_policy_chunks(
 
     # Preserve Pinecone ranking order
     for match in matches:
+
         chunk_id = match["id"]
 
-        document = documents_by_id.get(chunk_id)
+        document = documents_by_id.get(
+            chunk_id
+        )
 
         if not document:
             continue
 
-        metadata = document.get("metadata", {})
+        metadata = document.get(
+            "metadata",
+            {}
+        )
 
         retrieved_chunks.append(
             {
@@ -106,9 +128,15 @@ def retrieve_policy_chunks(
                 "title": metadata.get("title"),
                 "page": metadata.get("page"),
                 "section": metadata.get("section"),
-                "document_type": metadata.get("document_type"),
-                "source": metadata.get("source"),
-                "domain": metadata.get("domain"),
+                "document_type": metadata.get(
+                    "document_type"
+                ),
+                "source": metadata.get(
+                    "source"
+                ),
+                "domain": metadata.get(
+                    "domain"
+                ),
             }
         )
 

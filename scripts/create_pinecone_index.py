@@ -10,7 +10,7 @@ PINECONE_API_KEY = os.getenv(
     "PINECONE_API_KEY"
 )
 
-INDEX_NAME = "civicpulse-government-policies"
+INDEX_NAME = "civicpulse-government-policies-voyage"
 
 DIMENSION = 768
 METRIC = "cosine"

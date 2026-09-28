@@ -10,7 +10,7 @@ load_dotenv()
 
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 
-INDEX_NAME = "civicpulse-government-policies"
+INDEX_NAME = "civicpulse-government-policies-voyage"
 
 EMBEDDINGS_FILE = Path(
     "data/rag/processed/government_policy_embeddings.jsonl"

@@ -11,6 +11,6 @@ pymupdf
 pytesseract 
 pillow
 tesseract
-sentence-transformers
 pinecone
 python-multipart
+voyageai
