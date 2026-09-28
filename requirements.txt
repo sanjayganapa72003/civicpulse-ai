@@ -5,7 +5,6 @@ pandas
 openpyxl
 pydantic
 python-dotenv
-streamlit
 google-genai
 plotly
 pymupdf 
