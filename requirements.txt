@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+pymongo
+pandas
+openpyxl
+pydantic
+python-dotenv
+streamlit
+google-genai
+plotly
+pymupdf 
+pytesseract 
+pillow
+tesseract
+sentence-transformers
+pinecone
+python-multipart

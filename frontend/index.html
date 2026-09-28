@@ -1,0 +1,3671 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>CivicPulse — Development Intelligence</title>
+
+  <link rel="stylesheet" href="/styles.css">
+
+  <style>
+
+    /* =========================================================
+       HOTSPOT ROWS
+       ========================================================= */
+
+    .hotspot-row {
+      cursor: pointer;
+      transition:
+        transform 0.15s ease,
+        background 0.15s ease;
+    }
+
+    .hotspot-row:hover {
+      transform: translateX(4px);
+    }
+
+    .hotspot-row:active {
+      transform: translateX(2px);
+    }
+
+
+    /* =========================================================
+       DEMO DATA
+       ========================================================= */
+
+    .demo-notice {
+      margin-top: 20px;
+      padding: 12px 16px;
+      border-left: 3px solid #5b9cff;
+      background: rgba(255, 255, 255, 0.06);
+      color: #b8c7e6;
+      font-size: 12px;
+      line-height: 1.5;
+      max-width: 620px;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .demo-notice span {
+      display: block;
+      margin-bottom: 4px;
+      color: #7fb0ff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+
+
+    /* =========================================================
+       DRAWER BACKDROP
+       ========================================================= */
+
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 900;
+
+      background: rgba(3, 10, 25, 0.62);
+
+      opacity: 0;
+      pointer-events: none;
+
+      transition: opacity 0.25s ease;
+
+      backdrop-filter: blur(3px);
+    }
+
+    .drawer-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+
+    /* =========================================================
+       HOTSPOT DRAWER
+       ========================================================= */
+
+    .hotspot-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+
+      width: min(500px, 92vw);
+      height: 100vh;
+
+      z-index: 1000;
+
+      background: #07152f;
+
+      border-left: 1px solid rgba(255, 255, 255, 0.10);
+
+      box-shadow:
+        -20px 0 60px rgba(0, 0, 0, 0.35);
+
+      transform: translateX(100%);
+
+      transition:
+        transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hotspot-drawer.open {
+      transform: translateX(0);
+    }
+
+
+    .drawer-header {
+      padding: 24px;
+
+      border-bottom:
+        1px solid rgba(255, 255, 255, 0.08);
+
+      flex-shrink: 0;
+    }
+
+    .drawer-header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .drawer-eyebrow {
+      display: block;
+
+      margin-bottom: 8px;
+
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.13em;
+
+      color: #6ea4ff;
+    }
+
+    .drawer-header h2 {
+      margin: 0;
+
+      font-size: 24px;
+      line-height: 1.15;
+
+      color: #ffffff;
+    }
+
+    .drawer-header p {
+      margin: 7px 0 0;
+
+      font-size: 13px;
+
+      color: rgba(255, 255, 255, 0.58);
+    }
+
+    .drawer-close {
+      width: 36px;
+      height: 36px;
+
+      flex-shrink: 0;
+
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 8px;
+
+      background: rgba(255, 255, 255, 0.04);
+
+      color: rgba(255, 255, 255, 0.72);
+
+      font-size: 22px;
+
+      cursor: pointer;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .drawer-close:hover {
+      background: rgba(255, 255, 255, 0.09);
+      color: #ffffff;
+    }
+
+
+    .drawer-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px 40px;
+    }
+
+    .drawer-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .drawer-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .drawer-content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+    }
+
+
+    /* =========================================================
+       PRIORITY
+       ========================================================= */
+
+    .drawer-priority {
+      padding: 18px;
+      margin-bottom: 24px;
+
+      border: 1px solid rgba(91, 156, 255, 0.20);
+      border-radius: 10px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(91, 156, 255, 0.10),
+          rgba(255, 255, 255, 0.025)
+        );
+    }
+
+    .drawer-priority-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+
+      color: rgba(255, 255, 255, 0.50);
+    }
+
+    .drawer-priority-value {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .drawer-priority-value strong {
+      font-size: 36px;
+      line-height: 1;
+      color: #ffffff;
+    }
+
+    .drawer-priority-value span {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+
+    /* =========================================================
+       DRAWER SECTIONS
+       ========================================================= */
+
+    .drawer-section {
+      margin-bottom: 28px;
+    }
+
+    .drawer-section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      margin-bottom: 13px;
+    }
+
+    .drawer-section-title span {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.11em;
+
+      color: #ffffff;
+    }
+
+    .drawer-section-title small {
+      font-size: 9px;
+      color: rgba(255, 255, 255, 0.32);
+    }
+
+
+    /* =========================================================
+       SIGNAL CARDS
+       ========================================================= */
+
+    .drawer-signal {
+      padding: 15px;
+      margin-bottom: 9px;
+
+      border:
+        1px solid rgba(255, 255, 255, 0.07);
+
+      border-radius: 9px;
+
+      background:
+        rgba(255, 255, 255, 0.025);
+    }
+
+    .drawer-signal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      margin-bottom: 8px;
+    }
+
+    .drawer-signal-top span {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .drawer-signal-contribution {
+      font-size: 11px;
+      color: #80b1ff !important;
+    }
+
+    .drawer-signal-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .drawer-signal-main strong {
+      font-size: 21px;
+      color: #ffffff;
+    }
+
+    .drawer-signal-main small {
+      font-size: 10px;
+      text-align: right;
+
+      color: rgba(255, 255, 255, 0.42);
+    }
+
+    .drawer-bar {
+      width: 100%;
+      height: 4px;
+
+      margin-top: 10px;
+
+      overflow: hidden;
+      border-radius: 999px;
+
+      background:
+        rgba(255, 255, 255, 0.07);
+    }
+
+    .drawer-bar span {
+      display: block;
+
+      height: 100%;
+      width: 0%;
+
+      border-radius: inherit;
+
+      background: #5b9cff;
+
+      transition: width 0.4s ease;
+    }
+
+
+    /* =========================================================
+       DISTRICT CONTEXT
+       ========================================================= */
+
+    .drawer-context-grid {
+      display: grid;
+
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+      gap: 9px;
+    }
+
+    .drawer-context-card {
+      padding: 14px;
+
+      border:
+        1px solid rgba(255, 255, 255, 0.07);
+
+      border-radius: 9px;
+
+      background:
+        rgba(255, 255, 255, 0.025);
+    }
+
+    .drawer-context-card small {
+      display: block;
+
+      margin-bottom: 7px;
+
+      font-size: 9px;
+
+      color: rgba(255, 255, 255, 0.42);
+    }
+
+    .drawer-context-card strong {
+      display: block;
+
+      font-size: 18px;
+
+      color: #ffffff;
+    }
+
+    .drawer-context-card em {
+      display: block;
+
+      margin-top: 4px;
+
+      font-size: 9px;
+      font-style: normal;
+
+      color: rgba(255, 255, 255, 0.38);
+    }
+
+
+    /* =========================================================
+       SCORING WEIGHTS
+       ========================================================= */
+
+    .drawer-weight-note {
+      margin-top: 10px;
+
+      padding: 13px;
+
+      border-radius: 8px;
+
+      background:
+        rgba(255, 255, 255, 0.025);
+
+      border:
+        1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .drawer-weight-note p {
+      margin: 0 0 10px;
+
+      font-size: 10px;
+      line-height: 1.55;
+
+      color: rgba(255, 255, 255, 0.48);
+    }
+
+    .drawer-weights {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .drawer-weights span {
+      padding: 5px 7px;
+
+      border:
+        1px solid rgba(255, 255, 255, 0.08);
+
+      border-radius: 5px;
+
+      font-size: 9px;
+
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .drawer-weights b {
+      color: #ffffff;
+    }
+
+
+    /* =========================================================
+       POLICY
+       ========================================================= */
+
+    .drawer-policy-button {
+      width: 100%;
+
+      margin-top: 4px;
+
+      padding: 12px 14px;
+
+      border: 0;
+      border-radius: 7px;
+
+      background: #2563eb;
+
+      color: #ffffff;
+
+      font-size: 12px;
+      font-weight: 700;
+
+      cursor: pointer;
+    }
+
+    .drawer-policy-button:hover {
+      background: #3575f0;
+    }
+
+    .drawer-policy-button:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+
+    .drawer-policy-status {
+      padding: 15px;
+      margin-top: 12px;
+
+      border-radius: 8px;
+
+      border:
+        1px solid rgba(255, 255, 255, 0.07);
+
+      background:
+        rgba(255, 255, 255, 0.025);
+    }
+
+    .drawer-policy-status small {
+      display: block;
+
+      margin-bottom: 7px;
+
+      font-size: 9px;
+      letter-spacing: 0.10em;
+
+      color: rgba(255, 255, 255, 0.40);
+    }
+
+    .drawer-policy-status h4 {
+      margin: 0 0 7px;
+
+      font-size: 14px;
+
+      color: #ffffff;
+    }
+
+    .drawer-policy-status p {
+      margin: 0;
+
+      font-size: 11px;
+      line-height: 1.6;
+
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .drawer-policy-evidence {
+      margin-top: 10px;
+    }
+
+    .drawer-evidence {
+      padding: 14px;
+      margin-bottom: 9px;
+
+      border:
+        1px solid rgba(255, 255, 255, 0.07);
+
+      border-radius: 8px;
+
+      background:
+        rgba(255, 255, 255, 0.025);
+    }
+
+    .drawer-evidence small {
+      display: block;
+
+      margin-bottom: 7px;
+
+      font-size: 9px;
+      letter-spacing: 0.08em;
+
+      color: #80b1ff;
+    }
+
+    .drawer-evidence h4 {
+      margin: 0 0 8px;
+
+      font-size: 13px;
+
+      color: #ffffff;
+    }
+
+    .drawer-evidence p {
+      margin: 0;
+
+      font-size: 11px;
+      line-height: 1.6;
+
+      color: rgba(255, 255, 255, 0.58);
+    }
+
+    .drawer-limitations {
+      margin-top: 10px;
+
+      padding: 12px;
+
+      border-left:
+        2px solid rgba(255, 255, 255, 0.18);
+
+      background:
+        rgba(255, 255, 255, 0.025);
+    }
+
+    .drawer-limitations strong {
+      display: block;
+
+      margin-bottom: 6px;
+
+      font-size: 10px;
+
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .drawer-limitations ul {
+      margin: 0;
+      padding-left: 17px;
+    }
+
+    .drawer-limitations li {
+      margin-bottom: 4px;
+
+      font-size: 10px;
+      line-height: 1.5;
+
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+
+    /* =========================================================
+       BODY
+       ========================================================= */
+
+    body.drawer-open {
+      overflow: hidden;
+    }
+
+
+    /* =========================================================
+       MOBILE
+       ========================================================= */
+
+    @media (max-width: 600px) {
+
+      .hotspot-drawer {
+        width: 100%;
+      }
+
+      .drawer-context-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     LOADING
+     ========================================================= -->
+
+<div class="loading-screen" id="loadingScreen">
+
+  <div class="loader">
+
+    <div class="orbit o1"></div>
+    <div class="orbit o2"></div>
+
+    <div class="core">
+      <span></span>
+    </div>
+
+    <h3>CivicPulse</h3>
+
+    <p id="loadingText">
+      Building development intelligence
+    </p>
+
+    <div class="dots">
+      <i></i>
+      <i></i>
+      <i></i>
+    </div>
+
+  </div>
+
+</div>
+
+
+<div class="app">
+
+
+  <!-- =======================================================
+       HEADER
+       ======================================================= -->
+
+  <header class="topbar">
+
+    <div class="brand">
+
+      <div class="brand-mark">
+        <b></b>
+        <b></b>
+        <b></b>
+      </div>
+
+      <div>
+
+        <strong>
+          CivicPulse
+        </strong>
+
+        <small>
+          DEVELOPMENT INTELLIGENCE
+        </small>
+
+      </div>
+
+    </div>
+
+
+    <div class="top-actions">
+
+      <span class="online">
+        <i></i>
+        System operational
+      </span>
+
+      <span class="location">
+        ◉ Karnataka
+      </span>
+
+    </div>
+
+  </header>
+
+
+  <main>
+
+
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
+
+    <section class="hero">
+
+      <div class="hero-copy">
+
+        <span class="eyebrow">
+          DIGITAL PUBLIC INFRASTRUCTURE
+        </span>
+
+
+        <h1>
+
+          From citizen voice<br>
+
+          <em>
+            to development intelligence.
+          </em>
+
+        </h1>
+
+
+        <p>
+
+          Understand where communities need infrastructure,
+          identify demand hotspots, measure service gaps,
+          and connect development needs with government policy evidence.
+
+        </p>
+
+
+        <div class="demo-notice">
+
+          <span>
+            DEMO DATA
+          </span>
+
+          Citizen requests shown in this prototype are synthetic data
+          generated for demonstration purposes and do not represent
+          actual citizen complaints.
+
+        </div>
+
+
+        <div class="hero-buttons">
+
+          <button
+            class="primary"
+            onclick="go('report')">
+
+            Report a development need
+            <span>→</span>
+
+          </button>
+
+
+          <button
+            class="secondary"
+            onclick="go('hotspots')">
+
+            Explore hotspots
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div class="signal">
+
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="ring r3"></div>
+
+        <div class="signal-core">
+          <i></i>
+        </div>
+
+        <label class="node n1">
+          ◌ Citizen demand
+        </label>
+
+        <label class="node n2">
+          ⌁ Infrastructure
+        </label>
+
+        <label class="node n3">
+          ◆ Policy evidence
+        </label>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         METRICS
+         ===================================================== -->
+
+    <section class="metrics">
+
+
+      <article>
+
+        <span>01</span>
+
+        <div>
+
+          <small>
+            CITIZEN REQUESTS
+          </small>
+
+          <strong id="kpiRequests">
+            —
+          </strong>
+
+          <em>
+            requests analysed
+          </em>
+
+        </div>
+
+      </article>
+
+
+      <article>
+
+        <span>02</span>
+
+        <div>
+
+          <small>
+            DISTRICTS WITH DEMAND
+          </small>
+
+          <strong id="kpiDistricts">
+            —
+          </strong>
+
+          <em>
+            districts represented
+          </em>
+
+        </div>
+
+      </article>
+
+
+      <article class="breakdown-card">
+
+        <span>03</span>
+
+        <div>
+
+          <small>
+            REQUEST BREAKDOWN
+          </small>
+
+          <div class="request-breakdown">
+
+            <div>
+              <b id="kpiRoad">—</b>
+              <em>Road</em>
+            </div>
+
+            <div>
+              <b id="kpiWater">—</b>
+              <em>Water</em>
+            </div>
+
+            <div>
+              <b id="kpiHealthcare">—</b>
+              <em>Healthcare</em>
+            </div>
+
+          </div>
+
+        </div>
+
+      </article>
+
+
+      <article>
+
+        <span>04</span>
+
+        <div>
+
+          <small>
+            AVG. SEVERITY
+          </small>
+
+          <strong id="kpiSeverity">
+            —
+          </strong>
+
+          <em>
+            across district demand
+          </em>
+
+        </div>
+
+      </article>
+
+
+    </section>
+
+
+    <!-- =====================================================
+         CITIZEN VOICE
+         ===================================================== -->
+
+    <section
+      class="section"
+      id="report">
+
+
+      <div class="heading">
+
+        <div>
+
+          <span class="eyebrow blue">
+            CITIZEN VOICE
+          </span>
+
+          <h2>
+            What is happening in your community?
+          </h2>
+
+          <p>
+            Share an infrastructure problem in English, Hindi, or Kannada.
+          </p>
+
+        </div>
+
+
+        <div class="langs">
+
+          <span>English</span>
+          <span>हिन्दी</span>
+          <span>ಕನ್ನಡ</span>
+
+        </div>
+
+      </div>
+
+
+      <div class="report-grid">
+
+
+        <div class="panel report">
+
+
+          <div class="tabs">
+
+            <button
+              class="tab active"
+              id="textTab"
+              onclick="textMode()">
+
+              ⌨ Text
+
+            </button>
+
+
+            <button
+              class="tab"
+              id="voiceTab"
+              onclick="voiceMode()">
+
+              ◉ Voice
+
+            </button>
+
+          </div>
+
+
+          <div id="textPanel">
+
+            <label>
+              DEVELOPMENT REQUEST
+            </label>
+
+
+            <textarea
+              id="request"
+              maxlength="1000"
+              placeholder="Example: There is no proper drinking water supply in our village..."
+            ></textarea>
+
+
+            <div class="counter">
+
+              <span>
+                Describe the issue and location if known
+              </span>
+
+              <span id="count">
+                0 / 1000
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <div
+            id="voicePanel"
+            class="voice hidden">
+
+
+            <div class="voice-head">
+
+              <div class="mic">
+                ●
+              </div>
+
+              <div>
+
+                <strong>
+                  Speak your request
+                </strong>
+
+                <p>
+                  Gemini transcription • English / Hindi / Kannada
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <button
+              class="record"
+              id="recordButton"
+              onclick="record()">
+
+              ●
+
+              <span id="recordText">
+                Start recording
+              </span>
+
+            </button>
+
+
+            <div
+              class="wave"
+              id="wave">
+
+              <i></i>
+              <i></i>
+              <i></i>
+              <i></i>
+              <i></i>
+              <i></i>
+              <i></i>
+              <i></i>
+              <i></i>
+              <i></i>
+              <i></i>
+
+            </div>
+
+
+            <p
+              class="hint"
+              id="voiceHint">
+
+              Your speech will be converted into text and sent through
+              the same analysis pipeline.
+
+            </p>
+
+          </div>
+
+
+          <button
+            class="submit"
+            id="submit"
+            onclick="submitRequest()">
+
+            Analyse development request
+            <span>→</span>
+
+          </button>
+
+
+          <div
+            class="success hidden"
+            id="success">
+
+            <b>✓</b>
+
+            <div>
+
+              <strong>
+                Request analysed successfully
+              </strong>
+
+              <p id="successText">
+                Added to the citizen demand intelligence layer.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="error-box hidden"
+            id="requestError">
+          </div>
+
+
+        </div>
+
+
+        <aside class="panel flow">
+
+          <strong>
+            How your request is used
+          </strong>
+
+
+          <div class="step">
+
+            <b>01</b>
+
+            <div>
+
+              <strong>
+                Understand
+              </strong>
+
+              <p>
+                Language, category, location and severity are extracted.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="line"></div>
+
+
+          <div class="step">
+
+            <b>02</b>
+
+            <div>
+
+              <strong>
+                Aggregate
+              </strong>
+
+              <p>
+                Requests combine with infrastructure and demographic data.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="line"></div>
+
+
+          <div class="step">
+
+            <b>03</b>
+
+            <div>
+
+              <strong>
+                Prioritise
+              </strong>
+
+              <p>
+                Demand and infrastructure gaps generate a transparent signal.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="line"></div>
+
+
+          <div class="step">
+
+            <b>04</b>
+
+            <div>
+
+              <strong>
+                Ground
+              </strong>
+
+              <p>
+                Relevant government programmes are retrieved as evidence.
+              </p>
+
+            </div>
+
+          </div>
+
+        </aside>
+
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         HOTSPOTS
+         ===================================================== -->
+
+    <section
+      class="section"
+      id="hotspots">
+
+
+      <div class="heading">
+
+        <div>
+
+          <span class="eyebrow blue">
+            DEVELOPMENT SIGNALS
+          </span>
+
+          <h2>
+            Priority hotspots
+          </h2>
+
+          <p>
+            Where citizen demand and infrastructure gaps intersect.
+          </p>
+
+        </div>
+
+
+        <button
+          class="view"
+          onclick="loadDashboard()">
+
+          Refresh ↻
+
+        </button>
+
+      </div>
+
+
+      <div class="table panel">
+
+
+        <div class="thead">
+
+          <span>RANK</span>
+          <span>DISTRICT</span>
+          <span>DOMAIN</span>
+          <span>DEMAND</span>
+          <span>SEVERITY</span>
+          <span>GAP</span>
+          <span>PRIORITY</span>
+
+        </div>
+
+
+        <div id="hotspotRows"></div>
+
+
+      </div>
+
+    </section>
+
+
+  </main>
+
+
+  <!-- =======================================================
+       FOOTER
+       ======================================================= -->
+
+  <footer>
+
+    <strong>
+      CivicPulse
+    </strong>
+
+    <span>
+      Citizen voice → Development intelligence
+    </span>
+
+    <span>
+      Prototype • Karnataka
+    </span>
+
+  </footer>
+
+
+</div>
+
+
+<!-- =========================================================
+     HOTSPOT DRAWER
+     ========================================================= -->
+
+<div
+  class="drawer-backdrop"
+  id="drawerBackdrop"
+  onclick="closeHotspotDrawer()">
+</div>
+
+
+<aside
+  class="hotspot-drawer"
+  id="hotspotDrawer"
+  aria-hidden="true">
+
+
+  <!-- DRAWER HEADER -->
+
+  <div class="drawer-header">
+
+    <div class="drawer-header-top">
+
+      <div>
+
+        <span class="drawer-eyebrow">
+          HOTSPOT INTELLIGENCE
+        </span>
+
+        <h2 id="drawerTitle">
+          Select a hotspot
+        </h2>
+
+        <p id="drawerCategory">
+          —
+        </p>
+
+      </div>
+
+
+      <button
+        class="drawer-close"
+        onclick="closeHotspotDrawer()"
+        aria-label="Close hotspot details">
+
+        ×
+
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- DRAWER CONTENT -->
+
+  <div class="drawer-content">
+
+
+    <!-- PRIORITY -->
+
+    <div class="drawer-priority">
+
+      <div class="drawer-priority-label">
+        PRIORITY SIGNAL
+      </div>
+
+      <div class="drawer-priority-value">
+
+        <strong id="drawerPriority">
+          —
+        </strong>
+
+        <span>
+          / 100
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <!-- WHY THIS HOTSPOT -->
+
+    <section class="drawer-section">
+
+      <div class="drawer-section-title">
+
+        <span>
+          WHY THIS HOTSPOT?
+        </span>
+
+        <small>
+          TRANSPARENT SIGNAL
+        </small>
+
+      </div>
+
+
+      <!-- DEMAND -->
+
+      <div class="drawer-signal">
+
+        <div class="drawer-signal-top">
+
+          <span>
+            DEMAND
+          </span>
+
+          <span
+            class="drawer-signal-contribution"
+            id="drawerDemandContribution">
+
+            —
+
+          </span>
+
+        </div>
+
+
+        <div class="drawer-signal-main">
+
+          <strong id="drawerDemand">
+            —
+          </strong>
+
+          <small>
+            citizen requests
+          </small>
+
+        </div>
+
+
+        <div class="drawer-bar">
+
+          <span id="drawerDemandBar"></span>
+
+        </div>
+
+      </div>
+
+
+      <!-- SEVERITY -->
+
+      <div class="drawer-signal">
+
+        <div class="drawer-signal-top">
+
+          <span>
+            SEVERITY
+          </span>
+
+          <span
+            class="drawer-signal-contribution"
+            id="drawerSeverityContribution">
+
+            —
+
+          </span>
+
+        </div>
+
+
+        <div class="drawer-signal-main">
+
+          <strong id="drawerSeverity">
+            —
+          </strong>
+
+          <small>
+            average severity / 5
+          </small>
+
+        </div>
+
+
+        <div class="drawer-bar">
+
+          <span id="drawerSeverityBar"></span>
+
+        </div>
+
+      </div>
+
+
+      <!-- INFRASTRUCTURE GAP -->
+
+      <div class="drawer-signal">
+
+        <div class="drawer-signal-top">
+
+          <span>
+            INFRASTRUCTURE GAP
+          </span>
+
+          <span
+            class="drawer-signal-contribution"
+            id="drawerInfrastructureContribution">
+
+            —
+
+          </span>
+
+        </div>
+
+
+        <div class="drawer-signal-main">
+
+          <strong id="drawerInfrastructureGap">
+            —
+          </strong>
+
+          <small id="drawerInfrastructureLabel">
+            infrastructure signal
+          </small>
+
+        </div>
+
+
+        <div class="drawer-bar">
+
+          <span id="drawerInfrastructureBar"></span>
+
+        </div>
+
+      </div>
+
+
+      <!-- POPULATION -->
+
+      <div class="drawer-signal">
+
+        <div class="drawer-signal-top">
+
+          <span>
+            POPULATION
+          </span>
+
+          <span
+            class="drawer-signal-contribution"
+            id="drawerPopulationContribution">
+
+            —
+
+          </span>
+
+        </div>
+
+
+        <div class="drawer-signal-main">
+
+          <strong id="drawerPopulation">
+            —
+          </strong>
+
+          <small>
+            population context
+          </small>
+
+        </div>
+
+
+        <div class="drawer-bar">
+
+          <span id="drawerPopulationBar"></span>
+
+        </div>
+
+      </div>
+
+
+      <!-- WEIGHTS -->
+
+      <div class="drawer-weight-note">
+
+        <p>
+
+          Priority combines four measurable signals using fixed,
+          transparent weights. The score is calculated by the
+          CivicPulse scoring engine, not by the LLM.
+
+        </p>
+
+
+        <div class="drawer-weights">
+
+          <span>
+            Demand <b>35%</b>
+          </span>
+
+          <span>
+            Severity <b>25%</b>
+          </span>
+
+          <span>
+            Infrastructure gap <b>30%</b>
+          </span>
+
+          <span>
+            Population <b>10%</b>
+          </span>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- DISTRICT CONTEXT -->
+
+    <section class="drawer-section">
+
+      <div class="drawer-section-title">
+
+        <span>
+          DISTRICT CONTEXT
+        </span>
+
+        <small>
+          SUPPORTING DATA
+        </small>
+
+      </div>
+
+
+      <div class="drawer-context-grid">
+
+
+        <div class="drawer-context-card">
+
+          <small>
+            POPULATION
+          </small>
+
+          <strong id="drawerDistrictPopulation">
+            —
+          </strong>
+
+          <em>
+            total population
+          </em>
+
+        </div>
+
+
+        <div class="drawer-context-card">
+
+          <small>
+            RURAL
+          </small>
+
+          <strong id="drawerRuralPopulation">
+            —
+          </strong>
+
+          <em>
+            rural population
+          </em>
+
+        </div>
+
+
+        <div class="drawer-context-card">
+
+          <small>
+            URBAN
+          </small>
+
+          <strong id="drawerUrbanPopulation">
+            —
+          </strong>
+
+          <em>
+            urban population
+          </em>
+
+        </div>
+
+
+        <div class="drawer-context-card">
+
+          <small>
+            ROAD COMPLETION
+          </small>
+
+          <strong id="drawerRoadCompletion">
+            —
+          </strong>
+
+          <em id="drawerRoadDetail">
+            —
+          </em>
+
+        </div>
+
+
+        <div class="drawer-context-card">
+
+          <small>
+            TAP COVERAGE
+          </small>
+
+          <strong id="drawerTapCoverage">
+            —
+          </strong>
+
+          <em id="drawerTapGap">
+            —
+          </em>
+
+        </div>
+
+
+        <div class="drawer-context-card">
+
+          <small>
+            CHCs
+          </small>
+
+          <strong id="drawerChcCount">
+            —
+          </strong>
+
+          <em>
+            facilities
+          </em>
+
+        </div>
+
+
+        <div class="drawer-context-card">
+
+          <small>
+            GENERAL HOSPITALS
+          </small>
+
+          <strong id="drawerHospitalCount">
+            —
+          </strong>
+
+          <em>
+            facilities
+          </em>
+
+        </div>
+
+
+      </div>
+
+    </section>
+
+
+    <!-- POLICY INTELLIGENCE -->
+
+    <section class="drawer-section">
+
+      <div class="drawer-section-title">
+
+        <span>
+          POLICY INTELLIGENCE
+        </span>
+
+        <small>
+          GOVERNMENT EVIDENCE
+        </small>
+
+      </div>
+
+
+      <div class="drawer-policy-status">
+
+        <h4 id="drawerPolicyHeading">
+          Retrieve policy evidence
+        </h4>
+
+        <p id="drawerPolicyIntro">
+
+          Search the CivicPulse government-policy knowledge base
+          for evidence relevant to this development need.
+
+        </p>
+
+
+        <button
+          class="drawer-policy-button"
+          id="drawerPolicyButton"
+          onclick="loadPolicy()">
+
+          Retrieve policy evidence →
+
+        </button>
+
+      </div>
+
+
+      <div
+        class="drawer-policy-evidence"
+        id="drawerPolicyEvidence">
+      </div>
+
+    </section>
+
+
+  </div>
+
+</aside>
+
+
+<script>
+
+
+/* =========================================================
+   STATE
+   ========================================================= */
+
+const API_BASE = "";
+
+let demandData = {};
+
+let infrastructureData = {};
+
+let hotspotData = [];
+
+let currentDistrict = "Bangalore";
+
+let currentCategory = null;
+
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+
+let successStatusTimeout = null;
+let voiceStatusTimeout = null;
+
+
+/* =========================================================
+   DOM
+   ========================================================= */
+
+const $ = selector =>
+  document.querySelector(selector);
+
+
+/* =========================================================
+   FORMATTING
+   ========================================================= */
+
+function formatNumber(value) {
+
+  if (
+    value === null ||
+    value === undefined ||
+    Number.isNaN(Number(value))
+  ) {
+    return "—";
+  }
+
+  return Number(value).toLocaleString("en-IN");
+}
+
+
+function formatMillions(value) {
+
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "—";
+  }
+
+  const n = Number(value);
+
+  if (n >= 1000000) {
+    return `${(n / 1000000).toFixed(2)}M`;
+  }
+
+  if (n >= 1000) {
+    return `${(n / 1000).toFixed(1)}K`;
+  }
+
+  return formatNumber(n);
+}
+
+
+function formatScore(value) {
+
+  return value === null ||
+    value === undefined
+      ? "—"
+      : Number(value).toFixed(2);
+
+}
+
+
+function formatPercent(value) {
+
+  if (
+    value === null ||
+    value === undefined ||
+    Number.isNaN(Number(value))
+  ) {
+    return "—";
+  }
+
+  return `${(Number(value) * 100).toFixed(1)}%`;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+function setLoading(message) {
+
+  $("#loadingText").textContent =
+    message ||
+    "Building development intelligence";
+
+  $("#loadingScreen")
+    .classList
+    .remove("done");
+}
+
+
+function hideLoading() {
+
+  $("#loadingScreen")
+    .classList
+    .add("done");
+}
+
+
+/* =========================================================
+   API
+   ========================================================= */
+
+async function api(path, options = {}) {
+
+  const response =
+    await fetch(
+      `${API_BASE}${path}`,
+      options
+    );
+
+  if (!response.ok) {
+
+    throw new Error(
+      `API request failed: ${response.status} ${response.statusText}`
+    );
+
+  }
+
+  return response.json();
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+function go(id) {
+
+  const element =
+    document.getElementById(id);
+
+  if (!element) {
+    return;
+  }
+
+  element.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+
+/* =========================================================
+   CATEGORY
+   ========================================================= */
+
+function getCategoryLabel(category) {
+
+  const labels = {
+
+    road:
+      "Road infrastructure",
+
+    water:
+      "Water infrastructure",
+
+    healthcare:
+      "Healthcare infrastructure"
+
+  };
+
+  return labels[category] ||
+    category ||
+    "Infrastructure";
+}
+
+
+/* =========================================================
+   GAP
+   ========================================================= */
+
+function getCategoryGap(
+  district,
+  category
+) {
+
+  const districtData =
+    infrastructureData[district];
+
+  if (!districtData) {
+    return null;
+  }
+
+  const categoryData =
+    districtData
+      .infrastructure
+      ?.[category];
+
+  if (!categoryData) {
+    return null;
+  }
+
+  return categoryData.gap || null;
+}
+
+
+function getGapDisplay(
+  district,
+  category
+) {
+
+  const gap =
+    getCategoryGap(
+      district,
+      category
+    );
+
+  if (!gap) {
+    return "—";
+  }
+
+  if (category === "water") {
+
+    if (!gap.available) {
+      return "Unavailable";
+    }
+
+    return formatPercent(
+      gap.coverage_gap
+    );
+  }
+
+  if (category === "road") {
+
+    if (!gap.available) {
+      return "Unavailable";
+    }
+
+    return formatPercent(
+      1 -
+      Number(
+        gap.completion_ratio || 0
+      )
+    );
+  }
+
+  if (category === "healthcare") {
+
+    if (!gap.available) {
+      return "Unavailable";
+    }
+
+    return "Data";
+  }
+
+  return "—";
+}
+
+
+/* =========================================================
+   KPI
+   ========================================================= */
+
+function renderKPIs() {
+
+  const districts =
+    Object.keys(demandData);
+
+  let totalRequests = 0;
+
+  let totalSeverity = 0;
+
+  let road = 0;
+
+  let water = 0;
+
+  let healthcare = 0;
+
+
+  districts.forEach(district => {
+
+    const data =
+      demandData[district];
+
+    totalRequests +=
+      Number(
+        data.total_requests || 0
+      );
+
+    totalSeverity +=
+      Number(
+        data.average_severity || 0
+      ) *
+      Number(
+        data.total_requests || 0
+      );
+
+    road +=
+      Number(
+        data.road || 0
+      );
+
+    water +=
+      Number(
+        data.water || 0
+      );
+
+    healthcare +=
+      Number(
+        data.healthcare || 0
+      );
+
+  });
+
+
+  const averageSeverity =
+    totalRequests > 0
+      ? totalSeverity / totalRequests
+      : 0;
+
+
+  $("#kpiRequests").textContent =
+    formatNumber(totalRequests);
+
+  $("#kpiDistricts").textContent =
+    formatNumber(districts.length);
+
+  $("#kpiRoad").textContent =
+    formatNumber(road);
+
+  $("#kpiWater").textContent =
+    formatNumber(water);
+
+  $("#kpiHealthcare").textContent =
+    formatNumber(healthcare);
+
+  $("#kpiSeverity").textContent =
+    averageSeverity > 0
+      ? averageSeverity.toFixed(2)
+      : "—";
+}
+
+
+/* =========================================================
+   PRIORITY
+   ========================================================= */
+
+function findPriority(
+  district,
+  category
+) {
+
+  if (!district || !category) {
+    return null;
+  }
+
+  return hotspotData.find(
+    item =>
+      item.district === district &&
+      item.category === category
+  );
+}
+
+
+/* =========================================================
+   DRAWER
+   ========================================================= */
+
+function openHotspotDrawer() {
+
+  const drawer =
+    $("#hotspotDrawer");
+
+  const backdrop =
+    $("#drawerBackdrop");
+
+  if (!drawer || !backdrop) {
+    return;
+  }
+
+  drawer.classList.add("open");
+
+  backdrop.classList.add("open");
+
+  drawer.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+  document.body.classList.add(
+    "drawer-open"
+  );
+}
+
+
+function closeHotspotDrawer() {
+
+  const drawer =
+    $("#hotspotDrawer");
+
+  const backdrop =
+    $("#drawerBackdrop");
+
+  if (!drawer || !backdrop) {
+    return;
+  }
+
+  drawer.classList.remove("open");
+
+  backdrop.classList.remove("open");
+
+  drawer.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  document.body.classList.remove(
+    "drawer-open"
+  );
+}
+
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (event.key === "Escape") {
+      closeHotspotDrawer();
+    }
+
+  }
+);
+
+
+/* =========================================================
+   SELECT HOTSPOT
+   ========================================================= */
+
+function selectHotspot(
+  district,
+  category
+) {
+
+  currentDistrict =
+    district;
+
+  currentCategory =
+    category;
+
+  renderHotspotDrawer();
+
+  openHotspotDrawer();
+}
+
+
+/* =========================================================
+   HOTSPOTS
+   ========================================================= */
+
+function renderHotspots() {
+
+  const container =
+    $("#hotspotRows");
+
+  if (!container) {
+    return;
+  }
+
+
+  if (!hotspotData.length) {
+
+    container.innerHTML = `
+
+      <div class="tr">
+
+        <span>—</span>
+
+        <span>
+          No hotspots available
+        </span>
+
+        <span>—</span>
+        <span>—</span>
+        <span>—</span>
+        <span>—</span>
+        <span>—</span>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+
+  container.innerHTML =
+    hotspotData
+      .map((item, index) => {
+
+        const severity =
+          item.signals?.average_severity ??
+          0;
+
+
+        return `
+
+          <div
+            class="tr hotspot-row"
+            onclick="selectHotspot(
+              '${item.district}',
+              '${item.category}'
+            )"
+          >
+
+            <span>
+              ${index + 1}
+            </span>
+
+            <strong>
+              ${item.district}
+            </strong>
+
+            <span>
+              ${getCategoryLabel(
+                item.category
+              )}
+            </span>
+
+            <span>
+              ${formatNumber(
+                item.signals?.demand_requests ?? 0
+              )}
+            </span>
+
+            <span>
+              ${
+                severity
+                  ? Number(severity).toFixed(2)
+                  : "—"
+              }
+            </span>
+
+            <span>
+              ${getGapDisplay(
+                item.district,
+                item.category
+              )}
+            </span>
+
+            <b>
+              ${formatScore(
+                item.priority_score
+              )}
+            </b>
+
+          </div>
+
+        `;
+
+      })
+      .join("");
+}
+
+
+/* =========================================================
+   DRAWER DETAILS
+   ========================================================= */
+
+function renderHotspotDrawer() {
+
+  if (
+    !currentDistrict ||
+    !currentCategory
+  ) {
+    return;
+  }
+
+
+  const priority =
+    findPriority(
+      currentDistrict,
+      currentCategory
+    );
+
+
+  const districtData =
+    infrastructureData[
+      currentDistrict
+    ] || {};
+
+
+  const infrastructure =
+    districtData.infrastructure ||
+    {};
+
+
+  const demographics =
+    districtData.demographics ||
+    {};
+
+
+  const signals =
+    priority?.signals ||
+    {};
+
+
+  /* Header */
+
+  $("#drawerTitle")
+    .textContent =
+      currentDistrict;
+
+  $("#drawerCategory")
+    .textContent =
+      getCategoryLabel(
+        currentCategory
+      );
+
+
+  $("#drawerPriority")
+    .textContent =
+      priority
+        ? formatScore(
+            priority.priority_score
+          )
+        : "—";
+
+
+  /* Scores */
+
+  const demandScore =
+    Number(
+      signals.demand_score || 0
+    );
+
+  const severityScore =
+    Number(
+      signals.severity_score || 0
+    );
+
+  const infrastructureGapScore =
+    Number(
+      signals.infrastructure_gap_score || 0
+    );
+
+  const populationScore =
+    Number(
+      signals.population_score || 0
+    );
+
+
+  const demandContribution =
+    demandScore * 35;
+
+  const severityContribution =
+    severityScore * 25;
+
+  const infrastructureContribution =
+    infrastructureGapScore * 30;
+
+  const populationContribution =
+    populationScore * 10;
+
+
+  /* Demand */
+
+  $("#drawerDemand")
+    .textContent =
+      formatNumber(
+        signals.demand_requests || 0
+      );
+
+  $("#drawerDemandContribution")
+    .textContent =
+      `+${demandContribution.toFixed(2)}`;
+
+  $("#drawerDemandBar")
+    .style
+    .width =
+      `${Math.min(
+        demandScore * 100,
+        100
+      )}%`;
+
+
+  /* Severity */
+
+  $("#drawerSeverity")
+    .textContent =
+      Number(
+        signals.average_severity || 0
+      ).toFixed(2);
+
+  $("#drawerSeverityContribution")
+    .textContent =
+      `+${severityContribution.toFixed(2)}`;
+
+  $("#drawerSeverityBar")
+    .style
+    .width =
+      `${Math.min(
+        severityScore * 100,
+        100
+      )}%`;
+
+
+  /* Infrastructure gap */
+
+  $("#drawerInfrastructureGap")
+    .textContent =
+      formatPercent(
+        infrastructureGapScore
+      );
+
+
+  if (currentCategory === "water") {
+
+    $("#drawerInfrastructureLabel")
+      .textContent =
+        "household tap coverage gap";
+
+  }
+
+  else if (currentCategory === "road") {
+
+    $("#drawerInfrastructureLabel")
+      .textContent =
+        "road completion gap";
+
+  }
+
+  else {
+
+    $("#drawerInfrastructureLabel")
+      .textContent =
+        "infrastructure signal";
+
+  }
+
+
+  $("#drawerInfrastructureContribution")
+    .textContent =
+      `+${infrastructureContribution.toFixed(2)}`;
+
+  $("#drawerInfrastructureBar")
+    .style
+    .width =
+      `${Math.min(
+        infrastructureGapScore * 100,
+        100
+      )}%`;
+
+
+  /* Population */
+
+  $("#drawerPopulation")
+    .textContent =
+      signals.population !== null &&
+      signals.population !== undefined
+        ? formatMillions(
+            signals.population
+          )
+        : "—";
+
+
+  $("#drawerPopulationContribution")
+    .textContent =
+      `+${populationContribution.toFixed(2)}`;
+
+  $("#drawerPopulationBar")
+    .style
+    .width =
+      `${Math.min(
+        populationScore * 100,
+        100
+      )}%`;
+
+
+  /* District context */
+
+  $("#drawerDistrictPopulation")
+    .textContent =
+      demographics.population !== undefined
+        ? formatMillions(
+            demographics.population
+          )
+        : "—";
+
+
+  $("#drawerRuralPopulation")
+    .textContent =
+      demographics.rural_population !== undefined
+        ? formatMillions(
+            demographics.rural_population
+          )
+        : "—";
+
+
+  $("#drawerUrbanPopulation")
+    .textContent =
+      demographics.urban_population !== undefined
+        ? formatMillions(
+            demographics.urban_population
+          )
+        : "—";
+
+
+  /* Road */
+
+  const roadIndicators =
+    infrastructure.road?.indicators ||
+    {};
+
+
+  if (
+    roadIndicators.road_length_sanctioned !==
+      undefined &&
+    roadIndicators.road_length_completed !==
+      undefined
+  ) {
+
+    const sanctioned =
+      Number(
+        roadIndicators.road_length_sanctioned
+      );
+
+    const completed =
+      Number(
+        roadIndicators.road_length_completed
+      );
+
+
+    const completion =
+      sanctioned > 0
+        ? completed / sanctioned
+        : null;
+
+
+    $("#drawerRoadCompletion")
+      .textContent =
+        completion !== null
+          ? formatPercent(completion)
+          : "—";
+
+
+    $("#drawerRoadDetail")
+      .textContent =
+        `${formatNumber(
+          completed
+        )} / ${formatNumber(
+          sanctioned
+        )}`;
+
+  }
+
+  else {
+
+    $("#drawerRoadCompletion")
+      .textContent =
+        "—";
+
+    $("#drawerRoadDetail")
+      .textContent =
+        "Data unavailable";
+
+  }
+
+
+  /* Water */
+
+  const waterIndicators =
+    infrastructure.water?.indicators ||
+    {};
+
+
+  if (
+    waterIndicators.household_tap_coverage !==
+      undefined
+  ) {
+
+    const coverage =
+      Number(
+        waterIndicators.household_tap_coverage
+      );
+
+
+    $("#drawerTapCoverage")
+      .textContent =
+        formatPercent(coverage);
+
+
+    $("#drawerTapGap")
+      .textContent =
+        `${formatPercent(
+          1 - coverage
+        )} gap`;
+
+  }
+
+  else {
+
+    $("#drawerTapCoverage")
+      .textContent =
+        "—";
+
+    $("#drawerTapGap")
+      .textContent =
+        "Data unavailable";
+
+  }
+
+
+  /* Healthcare */
+
+  const healthcareIndicators =
+    infrastructure.healthcare?.indicators ||
+    {};
+
+
+  $("#drawerChcCount")
+    .textContent =
+      healthcareIndicators.chc_count !==
+        undefined
+        ? formatNumber(
+            healthcareIndicators.chc_count
+          )
+        : "—";
+
+
+  $("#drawerHospitalCount")
+    .textContent =
+      healthcareIndicators.general_hospital_count !==
+        undefined
+        ? formatNumber(
+            healthcareIndicators.general_hospital_count
+          )
+        : "—";
+
+
+  /* Reset policy section */
+
+  $("#drawerPolicyHeading")
+    .textContent =
+      "Retrieve policy evidence";
+
+
+  $("#drawerPolicyIntro")
+    .textContent =
+      `Search the CivicPulse government-policy knowledge base
+       for evidence relevant to this ${getCategoryLabel(
+         currentCategory
+       ).toLowerCase()} need.`;
+
+
+  $("#drawerPolicyEvidence")
+    .innerHTML = "";
+
+
+  $("#drawerPolicyButton")
+    .disabled = false;
+
+
+  $("#drawerPolicyButton")
+    .textContent =
+      "Retrieve policy evidence →";
+}
+
+
+/* =========================================================
+   POLICY
+   ========================================================= */
+
+async function loadPolicy() {
+
+  if (
+    !currentDistrict ||
+    !currentCategory
+  ) {
+    return;
+  }
+
+
+  const button =
+    $("#drawerPolicyButton");
+
+
+  const evidenceContainer =
+    $("#drawerPolicyEvidence");
+
+
+  button.disabled = true;
+
+  button.textContent =
+    "Retrieving evidence…";
+
+
+  evidenceContainer.innerHTML = `
+
+    <div class="drawer-policy-status">
+
+      <small>
+        POLICY KNOWLEDGE BASE
+      </small>
+
+      <h4>
+        Retrieving government evidence
+      </h4>
+
+      <p>
+        Searching the CivicPulse policy knowledge base…
+      </p>
+
+    </div>
+
+  `;
+
+
+  try {
+
+    const district =
+      encodeURIComponent(
+        currentDistrict
+      );
+
+
+    const category =
+      encodeURIComponent(
+        currentCategory
+      );
+
+
+    const result =
+      await api(
+        `/api/hotspots/${district}/${category}/policy`
+      );
+
+
+    if (
+      !result.available &&
+      !result.policy
+    ) {
+
+      evidenceContainer.innerHTML = `
+
+        <div class="drawer-policy-status">
+
+          <small>
+            POLICY KNOWLEDGE BASE
+          </small>
+
+          <h4>
+            Policy evidence unavailable
+          </h4>
+
+          <p>
+            ${
+              result.reason ||
+              "No policy evidence was returned."
+            }
+          </p>
+
+        </div>
+
+      `;
+
+      return;
+    }
+
+
+    renderPolicyResult(result);
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Policy retrieval failed:",
+      error
+    );
+
+
+    evidenceContainer.innerHTML = `
+
+      <div class="drawer-policy-status">
+
+        <small>
+          POLICY KNOWLEDGE BASE
+        </small>
+
+        <h4>
+          Unable to retrieve policy evidence
+        </h4>
+
+        <p>
+          ${error.message}
+        </p>
+
+      </div>
+
+    `;
+
+  }
+
+  finally {
+
+    button.disabled = false;
+
+    button.textContent =
+      "Retrieve policy evidence →";
+
+  }
+
+}
+
+
+/* =========================================================
+   POLICY RESULT
+   ========================================================= */
+
+function renderPolicyResult(result) {
+
+  const container =
+    $("#drawerPolicyEvidence");
+
+
+  const policy =
+    result.policy || {};
+
+
+  const answer =
+    policy.answer ||
+    policy.summary ||
+    policy.explanation ||
+    "";
+
+
+  const evidence =
+    policy.evidence ||
+    policy.sources ||
+    policy.chunks ||
+    [];
+
+
+  const limitations =
+    policy.limitations ||
+    [];
+
+
+  let html = "";
+
+
+  if (answer) {
+
+    html += `
+
+      <div class="drawer-policy-status">
+
+        <small>
+          POLICY RELEVANCE
+        </small>
+
+        <h4>
+          Government policy context
+        </h4>
+
+        <p>
+          ${answer}
+        </p>
+
+      </div>
+
+    `;
+
+  }
+
+
+  if (
+    Array.isArray(evidence) &&
+    evidence.length
+  ) {
+
+    evidence.forEach(item => {
+
+      const title =
+        item.title ||
+        item.document ||
+        item.source ||
+        "Government document";
+
+
+      const page =
+        item.page !== undefined
+          ? `Page ${item.page}`
+          : "";
+
+
+      const claim =
+        item.claim ||
+        item.text ||
+        item.content ||
+        item.chunk ||
+        "";
+
+
+      html += `
+
+        <article class="drawer-evidence">
+
+          <small>
+            POLICY EVIDENCE ${page}
+          </small>
+
+          <h4>
+            ${title}
+          </h4>
+
+          <p>
+            ${claim}
+          </p>
+
+        </article>
+
+      `;
+
+    });
+
+  }
+
+
+  if (
+    Array.isArray(limitations) &&
+    limitations.length
+  ) {
+
+    html += `
+
+      <div class="drawer-limitations">
+
+        <strong>
+          Limitations
+        </strong>
+
+        <ul>
+
+          ${limitations
+            .map(
+              item =>
+                `<li>${item}</li>`
+            )
+            .join("")}
+
+        </ul>
+
+      </div>
+
+    `;
+
+  }
+
+
+  if (!html) {
+
+    html = `
+
+      <div class="drawer-policy-status">
+
+        <small>
+          POLICY KNOWLEDGE BASE
+        </small>
+
+        <h4>
+          Evidence retrieved
+        </h4>
+
+        <p>
+          Government policy evidence was retrieved,
+          but no formatted response was returned.
+        </p>
+
+      </div>
+
+    `;
+
+  }
+
+
+  container.innerHTML =
+    html;
+}
+
+
+/* =========================================================
+   TEXT / VOICE
+   ========================================================= */
+
+function textMode() {
+
+  $("#textTab")
+    .classList
+    .add("active");
+
+  $("#voiceTab")
+    .classList
+    .remove("active");
+
+  $("#textPanel")
+    .classList
+    .remove("hidden");
+
+  $("#voicePanel")
+    .classList
+    .add("hidden");
+}
+
+
+function voiceMode() {
+
+  $("#voiceTab")
+    .classList
+    .add("active");
+
+  $("#textTab")
+    .classList
+    .remove("active");
+
+  $("#voicePanel")
+    .classList
+    .remove("hidden");
+
+  $("#textPanel")
+    .classList
+    .add("hidden");
+}
+
+
+/* =========================================================
+   VOICE
+   ========================================================= */
+
+async function record() {
+  if (isRecording) {
+    stopRecording();
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true
+    });
+
+    audioChunks = [];
+
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : "audio/webm";
+
+    mediaRecorder = new MediaRecorder(stream, {
+      mimeType
+    });
+
+    mediaRecorder.ondataavailable = event => {
+      if (event.data.size > 0) {
+        audioChunks.push(event.data);
+      }
+    };
+
+    mediaRecorder.onstart = () => {
+      isRecording = true;
+
+      $("#recordText").textContent = "Stop recording";
+      $("#recordButton").classList.add("recording");
+      $("#wave").classList.add("active");
+
+      $("#voiceHint").textContent =
+        "Listening... Speak your request.";
+    };
+
+    mediaRecorder.onstop = async () => {
+      isRecording = false;
+
+      $("#recordText").textContent = "Start recording";
+      $("#recordButton").classList.remove("recording");
+      $("#wave").classList.remove("active");
+
+      stream.getTracks().forEach(track => track.stop());
+
+      const audioBlob = new Blob(
+        audioChunks,
+        { type: mediaRecorder.mimeType }
+      );
+
+      console.log("Audio MIME type:", audioBlob.type);
+      console.log("Audio size:", audioBlob.size);
+
+
+      await transcribeVoice(audioBlob);
+    };
+
+    mediaRecorder.start();
+
+  } catch (error) {
+    console.error("Microphone error:", error);
+
+    $("#voiceHint").textContent =
+      "Could not access your microphone.";
+  }
+}
+
+
+function stopRecording() {
+  if (
+    mediaRecorder &&
+    mediaRecorder.state !== "inactive"
+  ) {
+    mediaRecorder.stop();
+  }
+}
+
+
+async function transcribeVoice(audioBlob) {
+  if (voiceStatusTimeout) {
+    clearTimeout(voiceStatusTimeout);
+    voiceStatusTimeout = null;
+  }
+
+  $("#voiceHint").textContent =
+    "Please wait while we process the voice...";
+
+  // Disable both buttons while transcription is running
+  $("#recordButton").disabled = true;
+  $("#submit").disabled = true;
+
+  try {
+    const formData = new FormData();
+
+    formData.append(
+      "audio",
+      audioBlob,
+      "citizen-request.webm"
+    );
+
+    const response = await fetch("/api/transcribe", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.detail || "Transcription failed."
+      );
+    }
+
+    // Put transcript into request box
+    $("#request").value = data.transcript;
+
+    $("#count").textContent =
+      `${data.transcript.length} / 1000`;
+
+    // Voice processing is finished
+    $("#voiceHint").textContent =
+      "Voice processed successfully.";
+
+    voiceStatusTimeout = setTimeout(() => {
+      $("#voiceHint").textContent = "";
+      voiceStatusTimeout = null;
+    }, 5000);
+
+  } catch (error) {
+    console.error("Transcription error:", error);
+
+    $("#voiceHint").textContent =
+      "Could not process the voice recording. Please try again.";
+
+  } finally {
+    $("#recordButton").disabled = false;
+    $("#submit").disabled = false;
+  }
+}
+
+
+/* =========================================================
+   CITIZEN REQUEST
+   ========================================================= */
+
+async function submitRequest() {
+
+  const textarea =
+    $("#request");
+
+
+  const text =
+    textarea.value.trim();
+
+
+  if (!text) {
+
+    $("#requestError")
+      .textContent =
+        "Please describe the development issue first.";
+
+    $("#requestError")
+      .classList
+      .remove("hidden");
+
+    return;
+  }
+
+
+  $("#requestError")
+    .classList
+    .add("hidden");
+
+
+  $("#success")
+    .classList
+    .add("hidden");
+
+
+  const button =
+    $("#submit");
+
+
+  button.disabled =
+    true;
+
+
+  button.innerHTML =
+    "Analysing request…";
+
+
+  try {
+
+    const result =
+      await api(
+        "/api/citizen-requests",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            text: text,
+            source: "web"
+          })
+        }
+      );
+
+
+    $("#successText")
+      .textContent =
+        `Detected ${
+          result.category ||
+          "infrastructure"
+        } demand${
+          result.location?.district
+            ? ` in ${result.location.district}`
+            : ""
+        }.`;
+
+    if (successStatusTimeout) {
+      clearTimeout(successStatusTimeout);
+      successStatusTimeout = null;
+    }
+
+    $("#success")
+      .classList
+      .remove("hidden");
+
+    successStatusTimeout = setTimeout(() => {
+      $("#success")
+        .classList
+        .add("hidden");
+
+      successStatusTimeout = null;
+    }, 5000);
+
+
+    textarea.value = "";
+
+    $("#count")
+      .textContent =
+        "0 / 1000";
+
+
+    await loadDashboard();
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Request submission failed:",
+      error
+    );
+
+
+    $("#requestError")
+      .textContent =
+        error.message ||
+        "Unable to analyse the request.";
+
+    $("#requestError")
+      .classList
+      .remove("hidden");
+
+  }
+
+  finally {
+
+    button.disabled =
+      false;
+
+    button.innerHTML =
+      "Analyse development request <span>→</span>";
+  }
+}
+
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
+async function loadDashboard() {
+
+  try {
+
+    setLoading(
+      "Loading citizen demand..."
+    );
+
+
+    demandData =
+      await api(
+        "/api/demand/districts"
+      );
+
+
+    setLoading(
+      "Loading infrastructure intelligence..."
+    );
+
+
+    infrastructureData =
+      await api(
+        "/api/infrastructure/districts"
+      );
+
+
+    setLoading(
+      "Loading priority hotspots..."
+    );
+
+
+    const hotspotResponse =
+      await api(
+        "/api/hotspots?limit=10"
+      );
+
+
+    if (
+      Array.isArray(
+        hotspotResponse
+      )
+    ) {
+
+      hotspotData =
+        hotspotResponse;
+
+    }
+
+    else if (
+      Array.isArray(
+        hotspotResponse.hotspots
+      )
+    ) {
+
+      hotspotData =
+        hotspotResponse.hotspots;
+
+    }
+
+    else {
+
+      hotspotData =
+        [];
+    }
+
+
+    renderKPIs();
+
+    renderHotspots();
+
+    hideLoading();
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Dashboard loading failed:",
+      error
+    );
+
+
+    $("#loadingText")
+      .textContent =
+        "Unable to load development intelligence";
+
+
+    setTimeout(
+      hideLoading,
+      1000
+    );
+
+
+    const rows =
+      $("#hotspotRows");
+
+
+    if (rows) {
+
+      rows.innerHTML = `
+
+        <div class="tr">
+
+          <span>!</span>
+
+          <span>
+            Unable to load dashboard
+          </span>
+
+          <span>—</span>
+          <span>—</span>
+          <span>—</span>
+          <span>—</span>
+          <span>—</span>
+
+        </div>
+
+      `;
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   CHARACTER COUNTER
+   ========================================================= */
+
+$("#request")?.addEventListener(
+  "input",
+  event => {
+
+    const length =
+      event.target.value.length;
+
+    $("#count")
+      .textContent =
+        `${length} / 1000`;
+
+  }
+);
+
+
+/* =========================================================
+   INITIAL LOAD
+   ========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    loadDashboard();
+
+  }
+);
+
+</script>
+
+</body>
+</html>
